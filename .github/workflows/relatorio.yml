@@ -1,0 +1,77 @@
+name: Relatório
+
+# A automação do projeto: quando as planilhas de um mês chegam em
+# entrada/AAAA-MM/ (ou o código muda), gera o relatório de todos os meses e
+# publica em saida/ e public/ — a Vercel republica o site sozinha em seguida.
+#
+# Em pull request só confere: regenera e falha se o que foi commitado não
+# bater com o que os scripts geram (as saídas são determinísticas).
+
+on:
+  push:
+    branches: [main]
+    paths: ["entrada/**", "scripts/**", "requirements.txt"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  conferir:
+    name: Saídas commitadas batem com os scripts
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Gerar e comparar
+        run: |
+          cd scripts && python gerar_relatorio.py && cd ..
+          if ! git diff --quiet -- saida public; then
+            echo "::error::saida/ ou public/ diferente do gerado pelos scripts. Rode 'python scripts/gerar_relatorio.py' e comite o resultado."
+            git diff --stat -- saida public
+            exit 1
+          fi
+
+  publicar:
+    name: Gerar e publicar relatório
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: publicar-relatorio
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Gerar relatórios
+        run: cd scripts && python gerar_relatorio.py
+      - name: Publicar se algo mudou
+        run: |
+          git add saida public
+          if git diff --cached --quiet; then
+            echo "Relatórios já estavam em dia."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "Gera relatório (automático)"
+          for tentativa in 1 2 3; do
+            if git push; then exit 0; fi
+            echo "Push rejeitado (tentativa $tentativa/3), sincronizando..."
+            git fetch origin main
+            if ! git rebase origin/main; then
+              git rebase --abort
+              echo "::error::Conflito ao sincronizar com origin/main"
+              exit 1
+            fi
+          done
+          echo "::error::Não foi possível publicar depois de 3 tentativas"
+          exit 1

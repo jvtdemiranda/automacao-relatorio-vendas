@@ -1,0 +1,248 @@
+{
+  "mes": "2026-07",
+  "mes_extenso": "julho/2026",
+  "mes_anterior_extenso": "junho/2026",
+  "total": {
+    "bruto": 112029.54,
+    "devolucoes": 732.97,
+    "liquido": 111296.57,
+    "vendas": 973,
+    "ticket_medio": 115.14,
+    "meta": 109000.0,
+    "pct_meta": 1.0211,
+    "liquido_anterior": null,
+    "variacao": null
+  },
+  "lojas": [
+    {
+      "loja": "Centro",
+      "bruto": 46993.38,
+      "devolucoes": -0.0,
+      "liquido": 46993.38,
+      "vendas": 396,
+      "ticket_medio": 118.67,
+      "enviou": true,
+      "meta": 45000.0,
+      "pct_meta": 1.0443,
+      "liquido_anterior": null,
+      "variacao": null
+    },
+    {
+      "loja": "Umarizal",
+      "bruto": 39578.24,
+      "devolucoes": 732.97,
+      "liquido": 38845.27,
+      "vendas": 325,
+      "ticket_medio": 121.78,
+      "enviou": true,
+      "meta": 38000.0,
+      "pct_meta": 1.0222,
+      "liquido_anterior": null,
+      "variacao": null
+    },
+    {
+      "loja": "Ananindeua",
+      "bruto": 25457.92,
+      "devolucoes": -0.0,
+      "liquido": 25457.92,
+      "vendas": 252,
+      "ticket_medio": 101.02,
+      "enviou": true,
+      "meta": 26000.0,
+      "pct_meta": 0.9792,
+      "liquido_anterior": null,
+      "variacao": null
+    }
+  ],
+  "categorias": [
+    {
+      "categoria": "Dermatológicos",
+      "liquido": 50724.72,
+      "participacao": 0.4558
+    },
+    {
+      "categoria": "Cápsulas e suplementos",
+      "liquido": 39361.09,
+      "participacao": 0.3537
+    },
+    {
+      "categoria": "Veterinários",
+      "liquido": 7312.63,
+      "participacao": 0.0657
+    },
+    {
+      "categoria": "Florais e homeopatia",
+      "liquido": 7132.33,
+      "participacao": 0.0641
+    },
+    {
+      "categoria": "Revenda",
+      "liquido": 6765.8,
+      "participacao": 0.0608
+    }
+  ],
+  "diario": [
+    {
+      "data": "2026-07-01",
+      "liquido": 5297.18
+    },
+    {
+      "data": "2026-07-02",
+      "liquido": 3820.35
+    },
+    {
+      "data": "2026-07-03",
+      "liquido": 3917.33
+    },
+    {
+      "data": "2026-07-04",
+      "liquido": 2300.29
+    },
+    {
+      "data": "2026-07-06",
+      "liquido": 5422.26
+    },
+    {
+      "data": "2026-07-07",
+      "liquido": 4550.15
+    },
+    {
+      "data": "2026-07-08",
+      "liquido": 4382.98
+    },
+    {
+      "data": "2026-07-09",
+      "liquido": 4146.46
+    },
+    {
+      "data": "2026-07-10",
+      "liquido": 5182.95
+    },
+    {
+      "data": "2026-07-11",
+      "liquido": 3026.87
+    },
+    {
+      "data": "2026-07-13",
+      "liquido": 3969.56
+    },
+    {
+      "data": "2026-07-14",
+      "liquido": 5361.0
+    },
+    {
+      "data": "2026-07-15",
+      "liquido": 3368.05
+    },
+    {
+      "data": "2026-07-16",
+      "liquido": 4496.84
+    },
+    {
+      "data": "2026-07-17",
+      "liquido": 4227.7
+    },
+    {
+      "data": "2026-07-18",
+      "liquido": 2559.09
+    },
+    {
+      "data": "2026-07-20",
+      "liquido": 3237.5
+    },
+    {
+      "data": "2026-07-21",
+      "liquido": 4986.67
+    },
+    {
+      "data": "2026-07-22",
+      "liquido": 4087.63
+    },
+    {
+      "data": "2026-07-23",
+      "liquido": 4649.26
+    },
+    {
+      "data": "2026-07-24",
+      "liquido": 4177.82
+    },
+    {
+      "data": "2026-07-25",
+      "liquido": 2935.19
+    },
+    {
+      "data": "2026-07-27",
+      "liquido": 4074.16
+    },
+    {
+      "data": "2026-07-28",
+      "liquido": 3102.56
+    },
+    {
+      "data": "2026-07-29",
+      "liquido": 4308.73
+    },
+    {
+      "data": "2026-07-30",
+      "liquido": 5239.41
+    },
+    {
+      "data": "2026-07-31",
+      "liquido": 4468.58
+    }
+  ],
+  "qualidade": [
+    {
+      "loja": "Centro",
+      "arquivo": "vendas_centro_2026-07.xlsx",
+      "linhas_lidas": 581,
+      "linhas_validas": 580,
+      "devolucoes": 0,
+      "valor_devolucoes": 0.0,
+      "descartes": {
+        "linhas de total da própria planilha": 1
+      },
+      "avisos": [],
+      "problemas": [
+        "linhas de total da própria planilha: 1"
+      ]
+    },
+    {
+      "loja": "Umarizal",
+      "arquivo": "umarizal_vendas_202607.csv",
+      "linhas_lidas": 479,
+      "linhas_validas": 479,
+      "devolucoes": 10,
+      "valor_devolucoes": 732.97,
+      "descartes": {},
+      "avisos": [
+        "arquivo em codificação Windows (cp1252), convertido"
+      ],
+      "problemas": [
+        "devoluções abatidas: 10 (R$ 732,97)",
+        "arquivo em codificação Windows (cp1252), convertido"
+      ]
+    },
+    {
+      "loja": "Ananindeua",
+      "arquivo": "Vendas Ananindeua JUL-26.xlsx",
+      "linhas_lidas": 368,
+      "linhas_validas": 356,
+      "devolucoes": 0,
+      "valor_devolucoes": 0.0,
+      "descartes": {
+        "linhas duplicadas (mesma venda exportada duas vezes)": 12
+      },
+      "avisos": [],
+      "problemas": [
+        "linhas duplicadas (mesma venda exportada duas vezes): 12"
+      ]
+    }
+  ],
+  "destaques": [
+    "Faturamento líquido de R$ 111.296,57, 102,1% da meta consolidada.",
+    "Bateu a meta: Centro, Umarizal.",
+    "Mais distante da meta: Ananindeua, com 97,9% (faltaram R$ 542,08).",
+    "Categoria que mais faturou: Dermatológicos (45,6% do total)."
+  ]
+}

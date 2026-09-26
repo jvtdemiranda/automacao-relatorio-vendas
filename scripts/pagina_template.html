@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relatório de Vendas · Vitalis</title>
+<meta name="description" content="Relatório mensal gerado automaticamente a partir das planilhas de vendas de três lojas, cada uma exportada de um sistema diferente.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Crect%20width='24'%20height='24'%20rx='6'%20fill='%231f4e5a'/%3E%3Cpath%20d='M7%205h7l3%203v11H7z'%20fill='none'%20stroke='white'%20stroke-width='1.6'%20stroke-linejoin='round'/%3E%3Cpath%20d='M9.5%2016v-3M12%2016v-5M14.5%2016v-2'%20stroke='white'%20stroke-width='1.6'%20stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&family=Source+Code+Pro:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme:light;
+    --page:#f4f6f6; --surface:#ffffff; --surface-2:#eef2f3; --border:#dde3e5;
+    --ink:#1b1f23; --ink-2:#4a5358; --muted:#7d878c;
+    --brand:#1f4e5a; --brand-2:#2d7384; --meta:#c9d3d6;
+    --good:#1e7f4f; --good-bg:#e2f3ea; --bad:#b3261e; --bad-bg:#fbe8e6; --warn:#8a5a00; --warn-bg:#fdf1d8;
+    --font:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+    --mono:"Source Code Pro","SFMono-Regular",Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme:dark;
+      --page:#121617; --surface:#1a2022; --surface-2:#222a2d; --border:#2e383b;
+      --ink:#eef2f3; --ink-2:#b9c3c6; --muted:#859094;
+      --brand:#6fb3c4; --brand-2:#8fc7d4; --meta:#3a484c;
+      --good:#4cc38a; --good-bg:#17302a; --bad:#ef7a70; --bad-bg:#3a2120; --warn:#e3b04a; --warn-bg:#352b16;
+    }
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--page); color:var(--ink); font-family:var(--font); font-size:16px; line-height:1.5;}
+  h1,h2{margin:0; text-wrap:balance;}
+  .num{font-family:var(--mono); font-variant-numeric:tabular-nums;}
+  .wrap{max-width:960px; margin:0 auto; padding:0 16px;}
+
+  header{background:var(--surface); border-bottom:1px solid var(--border); padding:22px 0 18px;}
+  .eyebrow{font-size:12px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--brand-2);}
+  header h1{font-size:27px; font-weight:800; margin-top:4px;}
+  header p{margin:4px 0 0; color:var(--ink-2); font-size:15px;}
+  .baixar{display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;}
+  .btn{
+    display:inline-flex; align-items:center; gap:8px; text-decoration:none; font-weight:700; font-size:15px;
+    padding:10px 16px; border-radius:10px; border:1.5px solid var(--brand); color:var(--brand); background:transparent;
+  }
+  .btn.primario{background:var(--brand); color:var(--surface);}
+  .btn svg{width:18px; height:18px;}
+
+  main{padding:22px 0 40px;}
+  section{margin-top:26px;}
+  section:first-child{margin-top:0;}
+  h2{font-size:18px; font-weight:700; margin-bottom:10px;}
+  .card{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px;}
+
+  .destaques{margin:0; padding:14px 16px 14px 34px; background:var(--surface); border:1px solid var(--border);
+    border-left:4px solid var(--brand); border-radius:12px;}
+  .destaques li{margin:3px 0;}
+  .destaques li.alerta{color:var(--bad); font-weight:700;}
+
+  .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:10px;}
+  .kpi{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:13px 14px; min-width:0;}
+  .kpi .lbl{font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em;}
+  .kpi .val{font:600 22px var(--mono); margin-top:4px; overflow-wrap:anywhere;}
+  .bom{color:var(--good);} .ruim{color:var(--bad);}
+
+  table.lojas{width:100%; border-collapse:collapse; font-size:15px;}
+  table.lojas th{font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; text-align:right;
+    padding:0 8px 8px; border-bottom:2px solid var(--brand); white-space:nowrap;}
+  table.lojas th:first-child, table.lojas td:first-child{text-align:left; padding-left:0;}
+  table.lojas td{padding:10px 8px; text-align:right; border-bottom:1px solid var(--border); white-space:nowrap;}
+  table.lojas tr.total td{font-weight:700; border-bottom:none; border-top:1px solid var(--muted);}
+  .meta-barra{height:6px; background:var(--surface-2); border-radius:3px; margin-top:5px; overflow:hidden; min-width:70px;}
+  .meta-barra i{display:block; height:100%; border-radius:3px;}
+
+  .cat{margin-bottom:10px;}
+  .cat .topo{display:flex; justify-content:space-between; gap:10px; font-size:15px; margin-bottom:4px;}
+  .cat .topo .num{white-space:nowrap;}
+  .cat .barra{height:10px; background:var(--surface-2); border-radius:5px; overflow:hidden;}
+  .cat .barra i{display:block; height:100%; background:var(--brand); border-radius:5px;}
+
+  .qualidade{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+  .q{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:13px 14px; font-size:14px;}
+  .q h3{margin:0; font-size:15px;}
+  .q .arq{font:500 12px var(--mono); color:var(--muted); margin:2px 0 8px; overflow-wrap:anywhere;}
+  .q ul{margin:0; padding-left:18px; color:var(--ink-2);}
+  .q .ok{color:var(--good);}
+  .q .falta{color:var(--bad); font-weight:700;}
+  .explica{font-size:14px; color:var(--ink-2); margin:0 0 10px;}
+
+  footer{font-size:13px; color:var(--muted); margin-top:30px;}
+  footer a{color:var(--brand-2);}
+
+  @media (max-width:760px){
+    header h1{font-size:23px;}
+    .kpis{grid-template-columns:repeat(2,1fr);}
+    .kpi:first-child, .kpi:last-child{grid-column:1 / -1;}  /* 4 cartões em 2 colunas: 1 + 2 + 1 */
+    .kpi .val{font-size:19px; overflow-wrap:normal; white-space:nowrap;}
+    .cat .topo{flex-wrap:wrap; gap:0 10px;}
+    .qualidade{grid-template-columns:1fr;}
+    table.lojas thead{display:none;}
+    table.lojas, table.lojas tbody, table.lojas tr, table.lojas td{display:block; width:100%;}
+    table.lojas tr{display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; padding:12px 0; border-bottom:1px solid var(--border);}
+    table.lojas tr.total{border-bottom:none;}
+    table.lojas td{border:none; padding:0; text-align:left; white-space:normal;}
+    table.lojas tr.total td{border-top:none;}
+    table.lojas td:first-child{grid-column:1 / -1; font-weight:700; font-size:16px;}
+    table.lojas td[data-rotulo]::before{content:attr(data-rotulo); display:block; font-size:11px; font-weight:700;
+      color:var(--muted); text-transform:uppercase; letter-spacing:.03em;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow">Portfólio · automacao-relatorio-vendas</div>
+    <h1 id="titulo">Relatório de vendas</h1>
+    <p>Farmácia Vitalis Manipulação · gerado automaticamente a partir das planilhas das 3 lojas</p>
+    <div class="baixar">
+      <a class="btn primario" href="relatorio.pdf" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+        Baixar PDF
+      </a>
+      <a class="btn" href="relatorio.xlsx" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+        Baixar Excel
+      </a>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section>
+    <h2>Destaques do mês</h2>
+    <ul class="destaques" id="destaques"></ul>
+  </section>
+
+  <section>
+    <div class="kpis" id="kpis"></div>
+  </section>
+
+  <section>
+    <h2>Resultado por loja</h2>
+    <div class="card">
+      <table class="lojas">
+        <thead><tr><th>Loja</th><th>Faturamento</th><th>Meta</th><th>% da meta</th><th id="th-var">vs mês anterior</th><th>Vendas</th><th>Ticket médio</th></tr></thead>
+        <tbody id="lojas"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Faturamento por categoria</h2>
+    <div class="card" id="categorias"></div>
+  </section>
+
+  <section>
+    <h2>Qualidade dos dados recebidos</h2>
+    <p class="explica">Cada loja exporta de um sistema diferente. Antes de somar, o robô corrige e registra o que encontrou — pra ninguém confiar num número sem saber de onde ele veio.</p>
+    <div class="qualidade" id="qualidade"></div>
+  </section>
+
+  <footer>
+    Farmácia Vitalis Manipulação é fictícia e os dados são simulados — projeto de portfólio.
+    <a href="https://github.com/jvtdemiranda/automacao-relatorio-vendas">Ver código no GitHub</a>
+  </footer>
+</main>
+
+<script>
+(function(){
+"use strict";
+var R = /*__DADOS__*/;
+
+var brl = new Intl.NumberFormat("pt-BR", {style:"currency", currency:"BRL"});
+function pct(v, sinal){
+  if(v === null || v === undefined) return "—";
+  var t = (Math.abs(v) * 100).toFixed(1).replace(".", ",") + "%";
+  return sinal ? (v >= 0 ? "+" : "−") + t : t;
+}
+function esc(s){
+  return String(s).replace(/[&<>"']/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+  });
+}
+function classe(v, limite){ return v === null || v === undefined ? "" : (v >= limite ? "bom" : "ruim"); }
+
+var mes = R.mes_extenso.charAt(0).toUpperCase() + R.mes_extenso.slice(1);
+var titulo = document.getElementById("titulo");
+titulo.textContent = "Relatório de vendas ";
+var parteMes = document.createElement("span");
+parteMes.style.whiteSpace = "nowrap";
+parteMes.textContent = "· " + mes;
+titulo.appendChild(parteMes);
+document.getElementById("th-var").textContent = "vs " + R.mes_anterior_extenso.split("/")[0];
+
+document.getElementById("destaques").innerHTML = R.destaques.map(function(f){
+  return '<li' + (f.indexOf("Atenção") === 0 ? ' class="alerta"' : '') + '>' + esc(f) + '</li>';
+}).join("");
+
+var t = R.total;
+document.getElementById("kpis").innerHTML = [
+  ["Faturamento líquido", brl.format(t.liquido), ""],
+  ["vs " + R.mes_anterior_extenso, pct(t.variacao, true), classe(t.variacao, 0)],
+  ["Da meta consolidada", pct(t.pct_meta), classe(t.pct_meta, 1)],
+  ["Ticket médio", brl.format(t.ticket_medio), ""]
+].map(function(k){
+  return '<div class="kpi"><div class="lbl">' + esc(k[0]) + '</div><div class="val ' + k[2] + '">' + k[1] + '</div></div>';
+}).join("");
+
+document.getElementById("lojas").innerHTML = R.lojas.concat([Object.assign({}, t, {loja:"Total", enviou:true})]).map(function(l){
+  var total = l.loja === "Total";
+  var barra = l.pct_meta === null ? "" :
+    '<div class="meta-barra"><i style="width:' + Math.min(100, l.pct_meta * 100).toFixed(1) + '%;background:var(--' + (l.pct_meta >= 1 ? "good" : "bad") + ')"></i></div>';
+  return '<tr' + (total ? ' class="total"' : '') + '>' +
+    '<td>' + esc(l.loja) + (l.enviou ? '' : ' <span class="ruim">(sem dados)</span>') + '</td>' +
+    '<td class="num" data-rotulo="Faturamento">' + brl.format(l.liquido) + '</td>' +
+    '<td class="num" data-rotulo="Meta">' + (l.meta ? brl.format(l.meta) : "—") + '</td>' +
+    '<td class="num ' + classe(l.pct_meta, 1) + '" data-rotulo="% da meta">' + pct(l.pct_meta) + barra + '</td>' +
+    '<td class="num ' + classe(l.variacao, 0) + '" data-rotulo="vs ' + esc(R.mes_anterior_extenso.split("/")[0]) + '">' + pct(l.variacao, true) + '</td>' +
+    '<td class="num" data-rotulo="Vendas">' + l.vendas + '</td>' +
+    '<td class="num" data-rotulo="Ticket médio">' + brl.format(l.ticket_medio) + '</td></tr>';
+}).join("");
+
+var maior = Math.max.apply(null, R.categorias.map(function(c){ return c.liquido; })) || 1;
+document.getElementById("categorias").innerHTML = R.categorias.map(function(c){
+  return '<div class="cat"><div class="topo"><span>' + esc(c.categoria) + '</span>' +
+    '<span class="num">' + brl.format(c.liquido) + ' · ' + pct(c.participacao) + '</span></div>' +
+    '<div class="barra"><i style="width:' + (c.liquido / maior * 100).toFixed(1) + '%"></i></div></div>';
+}).join("");
+
+document.getElementById("qualidade").innerHTML = R.qualidade.map(function(q){
+  var itens = q.problemas;
+  var falta = !q.arquivo;
+  return '<div class="q"><h3>' + esc(q.loja) + '</h3>' +
+    '<div class="arq">' + (falta ? '<span class="falta">planilha não recebida</span>' : esc(q.arquivo)) + '</div>' +
+    (falta ? '' : '<div>' + q.linhas_validas + ' de ' + q.linhas_lidas + ' linhas usadas</div>') +
+    (itens.length ? '<ul>' + itens.map(function(i){ return '<li>' + esc(i) + '</li>'; }).join("") + '</ul>'
+                  : '<div class="ok">nenhum problema encontrado</div>') + '</div>';
+}).join("");
+})();
+</script>
+</body>
+</html>

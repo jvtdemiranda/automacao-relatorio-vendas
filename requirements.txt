@@ -1,0 +1,5 @@
+pandas==3.0.6
+openpyxl==3.1.5
+reportlab==4.2.5
+# usado automaticamente pelo openpyxl pra ler XML de planilhas de terceiros com segurança
+defusedxml==0.7.1
