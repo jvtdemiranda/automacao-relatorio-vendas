@@ -13,9 +13,11 @@ from datetime import datetime
 
 from openpyxl import Workbook
 from openpyxl.chart import BarChart, Reference
+from openpyxl.chart.data_source import AxDataSource, NumData, NumRef, NumVal, StrData, StrRef, StrVal
 from openpyxl.formatting.rule import CellIsRule
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
+from openpyxl.utils.cell import range_to_tuple
 from openpyxl.worksheet.pagebreak import Break
 from openpyxl.worksheet.table import Table, TableStyleInfo
 
@@ -33,6 +35,58 @@ DIAS_SEMANA = ["segunda", "terça", "quarta", "quinta", "sexta", "sábado", "dom
 
 
 # ---------------------------------------------------------------- utilidades
+
+# Resultado de cada fórmula, calculado em Python com a mesma regra:
+# {(aba, "F5"): 1234.5}. O openpyxl grava a fórmula sem o resultado, e
+# visualizadores que não calculam (celular, prévias online) mostrariam as
+# células vazias; salvar() grava esses resultados dentro do arquivo.
+RESULTADOS = {}
+
+
+def formula(ws, linha, coluna, expr, resultado):
+    c = ws.cell(row=linha, column=coluna, value=expr)
+    RESULTADOS[(ws.title, c.coordinate)] = round(float(resultado), 2)
+    return c
+
+
+def _valores(wb, ref):
+    """Valores das células de uma referência de gráfico, usando o resultado das fórmulas."""
+    if ":" not in ref.split("!")[-1]:
+        ref = f"{ref}:{ref.split('!')[-1]}"
+    aba, (c1, l1, c2, l2) = range_to_tuple(ref)
+    ws = wb[aba]
+    saida = [RESULTADOS.get((aba, ws.cell(row=l, column=c).coordinate), ws.cell(row=l, column=c).value)
+             for l in range(l1, l2 + 1) for c in range(c1, c2 + 1)]
+    return saida, ws.cell(row=l1, column=c1).number_format
+
+
+def preencher_caches(wb):
+    """
+    Grava dentro de cada gráfico uma cópia dos dados que ele desenha (é o que
+    o Excel faz ao salvar). O openpyxl grava só a referência às células, e
+    visualizadores que não calculam mostrariam o gráfico em branco.
+    """
+    for ws in wb.worksheets:
+        for grafico in ws._charts:
+            for serie in grafico.series:
+                valores, fmt = _valores(wb, serie.val.numRef.f)
+                serie.val.numRef.numCache = NumData(
+                    formatCode=fmt, ptCount=len(valores),
+                    pt=[NumVal(idx=i, v=float(v)) for i, v in enumerate(valores) if v is not None])
+                if serie.tx is not None and serie.tx.strRef is not None:
+                    nome, _ = _valores(wb, serie.tx.strRef.f)
+                    serie.tx.strRef.strCache = StrData(ptCount=1, pt=[StrVal(idx=0, v=str(nome[0]))])
+                if serie.cat is not None:
+                    ref = serie.cat.numRef.f if serie.cat.numRef is not None else serie.cat.strRef.f
+                    rotulos, fmt = _valores(wb, ref)
+                    if all(isinstance(r, datetime) for r in rotulos):
+                        serie.cat = AxDataSource(numRef=NumRef(f=ref, numCache=NumData(
+                            formatCode=fmt, ptCount=len(rotulos),
+                            pt=[NumVal(idx=i, v=float((r - datetime(1899, 12, 30)).days)) for i, r in enumerate(rotulos)])))
+                    else:
+                        serie.cat = AxDataSource(strRef=StrRef(f=ref, strCache=StrData(
+                            ptCount=len(rotulos), pt=[StrVal(idx=i, v=str(r)) for i, r in enumerate(rotulos)])))
+
 
 def texto(ws, linha, coluna, valor):
     """
@@ -263,13 +317,19 @@ def aba_diario(wb, r, dados):
     inicio = linha + 1
 
     por_dia = dados.pivot_table(index="data", columns="loja", values="valor", aggfunc="sum", fill_value=0.0)
+    totais = [0.0] * (n + 1)
     for i, (dia, valores) in enumerate(por_dia.sort_index().iterrows()):
         linha += 1
         ws.cell(row=linha, column=1, value=datetime(dia.year, dia.month, dia.day)).number_format = "dd/mm/yyyy"
         ws.cell(row=linha, column=2, value=DIAS_SEMANA[dia.weekday()])
+        soma_dia = 0.0
         for j, loja in enumerate(lojas, start=3):
-            ws.cell(row=linha, column=j, value=round(float(valores.get(loja, 0.0)), 2)).number_format = BRL
-        ws.cell(row=linha, column=n, value=f"=SUM(C{linha}:{get_column_letter(n - 1)}{linha})").number_format = BRL
+            v = round(float(valores.get(loja, 0.0)), 2)
+            soma_dia += v
+            totais[j] += v
+            ws.cell(row=linha, column=j, value=v).number_format = BRL
+        totais[n] += soma_dia
+        formula(ws, linha, n, f"=SUM(C{linha}:{get_column_letter(n - 1)}{linha})", soma_dia).number_format = BRL
         ws.cell(row=linha, column=n).font = Font(bold=True)
         linha_tabela(ws, linha, n, zebra=i % 2 == 1)
     fim = linha
@@ -278,7 +338,7 @@ def aba_diario(wb, r, dados):
     ws.cell(row=linha, column=1, value="Total do mês")
     for j in range(3, n + 1):
         letra = get_column_letter(j)
-        ws.cell(row=linha, column=j, value=f"=SUM({letra}{inicio}:{letra}{fim})").number_format = BRL
+        formula(ws, linha, j, f"=SUM({letra}{inicio}:{letra}{fim})", totais[j]).number_format = BRL
     linha_tabela(ws, linha, n, zebra=False, negrito=True)
     for j in range(1, n + 1):
         ws.cell(row=linha, column=j).border = Border(top=Side(style="thin", color=CINZA))
@@ -435,6 +495,7 @@ def aba_qualidade(wb, r):
 # ---------------------------------------------------------------- arquivo
 
 def salvar(caminho, resumo, dados):
+    RESULTADOS.clear()  # vários meses na mesma execução, com abas de mesmo nome
     wb = Workbook()
     aba_resumo(wb, resumo)
     aba_diario(wb, resumo, dados)
@@ -444,6 +505,10 @@ def salvar(caminho, resumo, dados):
     wb.properties.creator = "automacao-relatorio-vendas"
     wb.properties.title = f"Relatório de vendas {resumo['mes_extenso']}"
     wb.properties.created = wb.properties.modified = DATA_FIXA
+    wb.calculation.fullCalcOnLoad = True  # o Excel recalcula ao abrir
+    preencher_caches(wb)
+    arquivo_da_aba = {f"xl/worksheets/sheet{i}.xml": ws.title for i, ws in enumerate(wb.worksheets, start=1)}
+    gravados = 0
 
     # O .xlsx é um zip, e o openpyxl carimba a hora atual em cada arquivo
     # interno e na data de "modificado" (ignorando a que definimos acima).
@@ -454,8 +519,20 @@ def salvar(caminho, resumo, dados):
     with zipfile.ZipFile(buffer) as origem, zipfile.ZipFile(caminho, "w", zipfile.ZIP_DEFLATED) as destino:
         for item in origem.infolist():
             conteudo = origem.read(item.filename)
+            aba = arquivo_da_aba.get(item.filename)
+            if aba:
+                # grava o resultado de cada fórmula ao lado dela (ver RESULTADOS)
+                for (nome, celula), valor in RESULTADOS.items():
+                    if nome == aba:
+                        conteudo, n = re.subn(
+                            rb'(<c r="' + celula.encode() + rb'"[^>]*>)(<f>.*?</f>)(?:<v\s*/>|<v></v>)',
+                            rb"\g<1>\g<2><v>" + repr(valor).encode() + b"</v>", conteudo)
+                        gravados += n
             if item.filename == "docProps/core.xml":
                 conteudo = re.sub(rb"(<dcterms:modified[^>]*>)[^<]*", rb"\g<1>2026-01-01T00:00:00Z", conteudo)
             info = zipfile.ZipInfo(item.filename, date_time=(2026, 1, 1, 0, 0, 0))
             info.compress_type = zipfile.ZIP_DEFLATED
             destino.writestr(info, conteudo)
+    if gravados != len(RESULTADOS):
+        raise RuntimeError(f"{len(RESULTADOS) - gravados} fórmula(s) ficaram sem resultado gravado — "
+                           "a planilha apareceria vazia em visualizadores que não calculam")

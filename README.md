@@ -227,6 +227,17 @@ E depois de publicado, o retorno de quem abriu os arquivos:
     valores). Como não tenho o Excel aqui pra confirmar, os eixos passaram
     a ser marcados como visíveis explicitamente — o que não muda nada
     onde já funcionava.
+13. **Totais e gráficos em branco no celular.** O openpyxl grava as
+    fórmulas ("Total do dia", "Total do mês") sem o resultado, e os
+    gráficos só com a referência às células — quem abre no Excel não
+    percebe, porque ele recalcula, mas visualizadores de celular e
+    prévias online não calculam e mostravam as células e os gráficos
+    vazios. Agora o robô calcula cada total em Python, grava o resultado
+    ao lado da fórmula e guarda uma cópia dos dados dentro de cada
+    gráfico (como o próprio Excel faz ao salvar); se alguma fórmula
+    ficar sem resultado, a geração falha em vez de publicar a planilha
+    incompleta. Os 61 totais dos dois meses foram conferidos contra a
+    soma das células.
 
 Testes feitos: os totais de cada loja conferidos contra os valores usados
 pra gerar as planilhas; cada cenário da seção "Feito pra planilha real"
