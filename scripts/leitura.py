@@ -16,6 +16,7 @@ logo na leitura e nunca chega às saídas.
 import csv
 import glob
 import io
+import math
 import os
 import re
 import unicodedata
@@ -56,11 +57,15 @@ class Registro:
     devolucoes: int = 0
     valor_devolucoes: float = 0.0
     descartes: dict = field(default_factory=dict)
+    valor_descartado: dict = field(default_factory=dict)
     avisos: list = field(default_factory=list)
 
-    def descartar(self, motivo: str, n: int):
+    def descartar(self, motivo: str, n: int, valor: float = 0.0):
+        """valor: quanto essas linhas somariam, quando dá pra saber."""
         if n:
             self.descartes[motivo] = self.descartes.get(motivo, 0) + int(n)
+            if valor and not math.isnan(valor):
+                self.valor_descartado[motivo] = round(self.valor_descartado.get(motivo, 0.0) + float(valor), 2)
 
 
 def valor_texto(texto) -> float:
@@ -119,8 +124,8 @@ def finalizar(df: pd.DataFrame, reg: Registro, ano: int, mes: int) -> pd.DataFra
     reg.descartar("linhas com data, valor ou quantidade ilegível", invalidas.sum())
     df = df[~invalidas].copy()
 
-    fora = df["data"].map(lambda d: (d.year, d.month) != (ano, mes))
-    reg.descartar("linhas com data fora do mês do relatório", fora.sum())
+    fora = df["data"].map(lambda d: (d.year, d.month) != (ano, mes)).astype(bool)
+    reg.descartar("linhas com data fora do mês do relatório", fora.sum(), df.loc[fora, "valor"].sum())
     df = df[~fora].copy()
 
     df["qtd"] = df["qtd"].astype(int)
@@ -151,7 +156,8 @@ def ler_centro(caminho: str, reg: Registro, ano: int, mes: int) -> pd.DataFrame:
     exigir(df, ["Data", "Nº Venda", "Categoria", "Descrição", "Qtd", "Valor Total"])
 
     total = df["Data"].astype(str).str.contains("TOTAL", case=False, na=False)
-    reg.descartar("linhas de total da própria planilha", total.sum())
+    reg.descartar("linhas de total da própria planilha", total.sum(),
+                  df.loc[total, "Valor Total"].map(valor_texto).sum())
     df = df[~total]
 
     # LGPD (ver docstring do módulo). errors="ignore": se o sistema parar de
@@ -201,7 +207,8 @@ def ler_ananindeua(caminho: str, reg: Registro, ano: int, mes: int) -> pd.DataFr
     # venda exportada duas vezes; o sistema dessa loja lança quantidade
     # repetida como qtde 2, não como duas linhas iguais.
     duplicadas = df.duplicated()
-    reg.descartar("linhas duplicadas (mesma venda exportada duas vezes)", duplicadas.sum())
+    reg.descartar("linhas duplicadas (mesma venda exportada duas vezes)", duplicadas.sum(),
+                  df.loc[duplicadas, "total (R$)"].map(valor_texto).sum())
     df = df[~duplicadas]
     df = df.rename(columns={"dt_venda": "data", "num_pedido": "venda", "tipo_produto": "categoria",
                             "item": "produto", "qtde": "qtd", "total (R$)": "valor"})
@@ -224,6 +231,7 @@ def ler_mes(pasta: str, ano: int, mes: int):
         if not arquivos:
             reg.avisos.append("PLANILHA NÃO ENVIADA — o total consolidado não inclui esta loja")
         elif len(arquivos) > 1:
+            reg.arquivo = " + ".join(os.path.basename(a) for a in arquivos)
             reg.avisos.append(f"{len(arquivos)} arquivos encontrados; nenhum foi usado pra não somar em dobro")
         else:
             reg.arquivo = os.path.basename(arquivos[0])

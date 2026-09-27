@@ -198,6 +198,9 @@
       "descartes": {
         "linhas de total da própria planilha": 1
       },
+      "valor_descartado": {
+        "linhas de total da própria planilha": 43538.89
+      },
       "avisos": [],
       "problemas": [
         "linhas de total da própria planilha: 1"
@@ -211,6 +214,7 @@
       "devolucoes": 7,
       "valor_devolucoes": 467.52,
       "descartes": {},
+      "valor_descartado": {},
       "avisos": [
         "arquivo em codificação Windows (cp1252), convertido"
       ],
@@ -228,6 +232,9 @@
       "valor_devolucoes": 0.0,
       "descartes": {
         "linhas duplicadas (mesma venda exportada duas vezes)": 10
+      },
+      "valor_descartado": {
+        "linhas duplicadas (mesma venda exportada duas vezes)": 661.59
       },
       "avisos": [],
       "problemas": [

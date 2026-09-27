@@ -233,7 +233,7 @@ document.getElementById("qualidade").innerHTML = R.qualidade.map(function(q){
   var falta = !q.arquivo;
   return '<div class="q"><h3>' + esc(q.loja) + '</h3>' +
     '<div class="arq">' + (falta ? '<span class="falta">planilha não recebida</span>' : esc(q.arquivo)) + '</div>' +
-    (falta ? '' : '<div>' + q.linhas_validas + ' de ' + q.linhas_lidas + ' linhas usadas</div>') +
+    (q.linhas_lidas ? '<div>' + q.linhas_validas + ' de ' + q.linhas_lidas + ' linhas usadas</div>' : '') +
     (itens.length ? '<ul>' + itens.map(function(i){ return '<li>' + esc(i) + '</li>'; }).join("") + '</ul>'
                   : '<div class="ok">nenhum problema encontrado</div>') + '</div>';
 }).join("");

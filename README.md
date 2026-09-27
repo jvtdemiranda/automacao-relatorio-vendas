@@ -46,7 +46,7 @@ Ninguém precisa confiar num número sem saber de onde ele veio.
 ```
 entrada/2026-08/                      saida/2026-08/
   vendas_centro_2026-08.xlsx    ──┐     relatorio.pdf    -> resumo executivo (1 página)
-  umarizal_vendas_202608.csv    ──┼──►  relatorio.xlsx   -> números + todos os itens, pra filtrar
+  umarizal_vendas_202608.csv    ──┼──►  relatorio.xlsx   -> mesmos números + vendas por dia + todas as vendas, pra filtrar
   Vendas Ananindeua AGO-26.xlsx ──┘     resumo.json      -> os números em formato de dados
 entrada/metas.csv                     public/            -> página + PDF + Excel publicados
 ```
@@ -80,6 +80,19 @@ python gerar_relatorio.py 2026-08    # só um mês
 - **Participação por categoria** e **faturamento por dia**.
 - **Qualidade dos dados**: por loja, quantas linhas foram usadas e o que
   foi corrigido ou descartado.
+
+O **Excel** traz os mesmos números em quatro abas que se explicam
+sozinhas — cada uma com título e uma frase dizendo o que ela mostra:
+
+| Aba | O que tem |
+|---|---|
+| **Resumo** | Destaques, indicadores, resultado por loja com a situação de cada uma ("Meta batida" / "Faltaram R$ ..."), categorias, dois gráficos e um bloco "Como ler estes números" explicando cada termo |
+| **Vendas por dia** | Uma coluna por loja, dia da semana, total do dia e do mês, e gráfico empilhado por loja |
+| **Todas as vendas** | Cada item vendido ou devolvido, já corrigido e no mesmo formato pras três lojas, com filtro em cada coluna |
+| **Qualidade dos dados** | Uma linha por problema encontrado: o que foi encontrado, o que o robô fez e por que importa, em reais quando dá pra calcular ("Se fosse somada, a loja apareceria com R$ 43.538,89 a mais") |
+
+Todas as abas saem prontas pra imprimir (cabem na largura da folha, e as
+tabelas longas repetem o cabeçalho em cada página).
 
 ## Feito pra planilha real, não pra planilha de exemplo
 
@@ -196,6 +209,24 @@ mostraria **R$ 27.385,83 em vez de ~R$ 105 mil**, sem erro nenhum:
    número. Agora conta cada par loja + cupom.
 10. **Sem `metas.csv`, nada saía.** O arquivo de metas passou a ser
     opcional, e uma meta ilegível é ignorada com aviso em vez de travar.
+
+E depois de publicado, o retorno de quem abriu os arquivos:
+
+11. **O Excel estava difícil de entender.** Os números estavam certos,
+    mas a aba de qualidade mostrava "572" e "571" soltos, sem dizer o que
+    eram nem que diferença fizeram, com todos os problemas de uma loja
+    espremidos numa célula; a aba de vendas por dia não separava as lojas;
+    e nenhuma aba tinha título, explicação ou gráfico. O PDF tinha sido
+    revisado visualmente com cuidado; o Excel, só pelo conteúdo das
+    células. Redesenhado aba por aba — e desta vez conferido renderizado,
+    como quem abre o arquivo veria.
+12. **Risco de gráficos sem eixos no Excel.** Ao criar os gráficos,
+    esbarrei num problema conhecido do openpyxl 3.1: ele não grava que os
+    eixos são visíveis, e há relatos de versões recentes do Excel
+    escondendo o eixo nesse caso (gráfico sem nomes das lojas e sem
+    valores). Como não tenho o Excel aqui pra confirmar, os eixos passaram
+    a ser marcados como visíveis explicitamente — o que não muda nada
+    onde já funcionava.
 
 Testes feitos: os totais de cada loja conferidos contra os valores usados
 pra gerar as planilhas; cada cenário da seção "Feito pra planilha real"
